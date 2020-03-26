@@ -76,6 +76,7 @@ Clients
 
 # Resources
 - [docker-openresty](https://hub.docker.com/r/openresty/openresty)
+- [docker-keycloak](https://hub.docker.com/r/jboss/keycloak)
 - [lua-resty-auto-ssl](https://github.com/auto-ssl/lua-resty-auto-ssl)
 - [lua-resty-openidc](https://github.com/zmartzone/lua-resty-openidc)
 - [Securing Applications and Services Guide - Keycloak](https://www.keycloak.org/docs/latest/securing_apps/index.html)
