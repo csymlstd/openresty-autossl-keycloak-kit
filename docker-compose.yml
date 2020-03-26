@@ -1,0 +1,66 @@
+version: '3'
+services:
+    php:
+        build: ./php
+        image: php:7-fpm
+        restart: unless-stopped
+        volumes:
+            - './php/php.ini:/usr/local/etc/php/php.ini'
+            - './php/www.conf:/usr/local/etc/php-fpm.d/www.conf'
+            - './openresty/www:/var/www'
+        working_dir: /var/www
+
+    openresty:
+        build: ./openresty/build
+        container_name: nginx
+        depends_on:
+            - php
+        restart: always
+        ports: 
+            - 80:80
+            - 443:443
+        volumes: 
+            - ./openresty/nginx.conf:/usr/local/openresty/nginx/conf/nginx.conf
+            - ./openresty/conf:/usr/local/openresty/nginx/conf/apps:z
+            - ./openresty/www:/var/www
+            - ./openresty/certs:/certs:z
+        networks:
+            - default
+        extra_hosts:
+            - "host.docker.internal:172.17.0.1"
+
+    postgres:
+        image: mdillon/postgis:10
+        restart: unless-stopped
+        ports:
+            - 5432:5432
+        environment:
+            POSTGRES_USER: keycloak
+            POSTGRES_PASSWORD: keycloak
+        volumes:
+            - ./db:/var/lib/postgresql/data
+
+
+    keycloak:
+        image: jboss/keycloak
+        restart: always
+        depends_on: 
+            - openresty
+            - postgres
+        volumes:
+#            - ./keycloak/realm.json:/tmp/realm.json
+        ports:
+            - 8282:8080
+        environment:
+            DB_VENDOR: postgres
+            DB_ADDR: postgres
+            DB_PORT: 5432
+            DB_USER: keycloak
+            DB_PASSWORD: keycloak
+#            KEYCLOAK_IMPORT: /tmp/realm.json
+            KEYCLOAK_USER: admin
+            KEYCLOAK_PASSWORD: admin
+            PROXY_ADDRESS_FORWARDING: 'true'
+            JAVA_OPTS: "-Dkeycloak.profile.feature.scripts=enabled -Dkeycloak.profile.feature.upload_scripts=enabled  -server -Xms64m -Xmx512m 
+            -XX:MetaspaceSize=96M -XX:MaxMetaspaceSize=256m -Djava.net.preferIPv4Stack=true 
+            -Djboss.modules.system.pkgs=org.jboss.byteman -Djava.awt.headless=true"

@@ -1,0 +1,53 @@
+# Example for a protected PHP site
+server {
+  listen 443 http2 ssl;
+
+	# Dynamic handler for issuing or returning certs for SNI domains.
+  ssl_certificate_by_lua_block {
+    auto_ssl:ssl_certificate()
+  }
+
+  # Handler for Keycloak
+  access_by_lua '
+    local opts = {
+        redirect_uri_path = "/redirect_uri",
+        accept_none_alg = true,
+        discovery = "https://login.mydomain.com/auth/realms/master/.well-known/openid-configuration",
+        client_id = "movies",
+        client_secret = "e7deaea8-c96d-4d0d-b430-3a7e0174aedc",
+        redirect_uri_scheme = "https",
+        logout_path = "/logout",
+        redirect_after_logout_uri = "https://login.mydomain.com/auth/realms/master/protocol/openid-connect/logout?redirect_uri=https://mydomain.com",
+        redirect_after_logout_with_id_token_hint = false,
+        session_contents = {id_token=true}
+    }
+    -- call introspect for OAuth 2.0 Bearer Access Token validation
+    local res, err = require("resty.openidc").authenticate(opts)
+    if err then
+        ngx.status = 403
+        ngx.say(err)
+        ngx.exit(ngx.HTTP_FORBIDDEN)
+    end
+  ';
+
+  server_name mydomain.com;
+  root /var/www/default;
+
+  location / {
+    try_files $uri $uri/ /index.php?$args;
+  }
+
+  location ~ \.php$ {
+      try_files $uri =404;
+      fastcgi_split_path_info ^(.+\.php)(/.+)$;
+      fastcgi_pass php:9000;
+      fastcgi_index index.php;
+      include fastcgi_params;
+      fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+      fastcgi_param PATH_INFO $fastcgi_path_info;
+  }
+
+  # Fallback self-signed cert
+  ssl_certificate /etc/ssl/resty-auto-ssl-fallback.crt;
+  ssl_certificate_key /etc/ssl/resty-auto-ssl-fallback.key;
+}

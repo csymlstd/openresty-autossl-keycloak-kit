@@ -1,0 +1,31 @@
+# Example for a PHP site unprotected
+server {
+    listen 443 http2 ssl;
+
+	# Dynamic handler for issuing or returning certs for SNI domains.
+    ssl_certificate_by_lua_block {
+      auto_ssl:ssl_certificate()
+    }
+
+	server_name mydomain.com;
+    index index.php index.html index.htm;
+    root /var/www/default;
+
+    location / {
+      try_files $uri $uri/ /index.php?$args;
+    }
+
+    location ~ \.php$ {
+        try_files $uri =404;
+        fastcgi_split_path_info ^(.+\.php)(/.+)$;
+        fastcgi_pass php:9000;
+        fastcgi_index index.php;
+        include fastcgi_params;
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+        fastcgi_param PATH_INFO $fastcgi_path_info;
+    }
+
+    # Fallback self-signed cert
+    ssl_certificate /etc/ssl/resty-auto-ssl-fallback.crt;
+    ssl_certificate_key /etc/ssl/resty-auto-ssl-fallback.key;
+}
