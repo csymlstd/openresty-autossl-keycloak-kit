@@ -67,7 +67,7 @@ Clients
   - Go to Mappers tab
   - Click Create
   - Name: Roles
-  - Mapper Type: User Real Role
+  - Mapper Type: User Realm Role
   - Multivalued: ON
   - Add to ID token: ON
   - Add to access token: ON
