@@ -7,7 +7,7 @@ services:
         volumes:
             - './php/php.ini:/usr/local/etc/php/php.ini'
             - './php/www.conf:/usr/local/etc/php-fpm.d/www.conf'
-            - './openresty/www:/var/www'
+            - './www:/var/www'
         working_dir: /var/www
 
     openresty:
@@ -22,7 +22,7 @@ services:
         volumes: 
             - ./openresty/nginx.conf:/usr/local/openresty/nginx/conf/nginx.conf
             - ./openresty/conf:/usr/local/openresty/nginx/conf/apps:z
-            - ./openresty/www:/var/www
+            - ./www:/var/www
             - ./openresty/certs:/certs:z
         networks:
             - default
